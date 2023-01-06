@@ -263,7 +263,7 @@ There is an example program that shows you the API usage (documented
 above).:
 
 ```sh
-    $ git clone https://github.com/opencoff/go-srp
+    $ git clone https://github.com/arag0re/go-apple-srp6
     $ cd go-srp
     $ go test -v
 ```
