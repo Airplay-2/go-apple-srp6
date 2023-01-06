@@ -1,4 +1,4 @@
-# Standalone SRP-6a implementation in go-lang
+# Standalone apple SRP-6a implementation in go-lang
 
 [![GoDoc](https://godoc.org/github.com/opencoff/go-srp?status.svg)](https://godoc.org/github.com/opencoff/go-srp)
 [![Go Report Card](https://goreportcard.com/badge/github.com/opencoff/go-srp)](https://goreportcard.com/report/github.com/opencoff/go-srp)
