@@ -1,6 +1,6 @@
 // self test for srp
 //
-// Copyright 2013-2017 Sudhi Herle <sudhi.herle-at-gmail-dot-com>
+// Copyright 2013-2023 arag0re <arag0re.eth-at-protonmail-dot-com>
 // License: MIT
 //
 
@@ -38,7 +38,7 @@ type userdb struct {
 
 func newUserDB(user, pass []byte, p int) (*userdb, error) {
 
-	s, err := New(p)
+	s, err := New()
 	if err != nil {
 		return nil, err
 	}

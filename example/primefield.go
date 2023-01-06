@@ -2,7 +2,7 @@
 //
 // Usage: ./primefield bits [bits ..]
 //
-// Copyright 2013-2017 Sudhi Herle <sudhi.herle-at-gmail-dot-com>
+// Copyright 2013-2023 arag0re <arag0re.eth-at-protonmail-dot-com>
 // License: MIT
 //
 

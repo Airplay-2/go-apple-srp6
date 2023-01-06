@@ -1,8 +1,10 @@
-package main
-
 // Simple test program to test the SRP library
-// Author: Sudhi Herle
-// April 2014
+//
+// Copyright 2013-2023 arag0re <arag0re.eth-at-protonmail-dot-com>
+// License: MIT
+//
+
+package main
 
 import (
 	"crypto/subtle"
@@ -11,11 +13,10 @@ import (
 )
 
 func main() {
-	bits := 1024
 	pass := []byte("password string that's too long")
 	i := []byte("foouser")
 
-	s, err := srp.New(bits)
+	s, err := srp.New()
 	if err != nil {
 		panic(err)
 	}
