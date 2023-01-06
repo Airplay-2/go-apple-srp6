@@ -1,8 +1,7 @@
-// srp.go - golang implementation of SRP-6a like apple wants it 
+// srp.go - golang implementation of SRP-6a like apple wants it
 //
 // Copyright 2013-2023 arag0re <arag0re.eth-at-protonmail-dot-com>
 // License: MIT
-//
 
 // Package srp implements SRP-6a per [1]. It uses the standard library
 // and the golang extended library and nothing else.
@@ -20,12 +19,12 @@
 //
 // In this implementation:
 //
-//	H  = SHA1()
-//	k  = H(N | g)
-//  t  = H(I | ':' |P)
-//	x  = H(s | t)
-//	I  = clear text
-//	P  = clear text
+//		H  = SHA1()
+//		k  = H(N | g)
+//	 t  = H(I | ':' |P)
+//		x  = H(s | t)
+//		I  = clear text
+//		P  = clear text
 //
 // Per RFC-5054, we adopt the following padding convention:
 //
@@ -46,7 +45,7 @@ package srp
 //        All arithmetic is done modulo N.
 //   g    A generator modulo N
 //   k    Multiplier parameter 			(k = H(PAD(N) | PAD(g)) in SRP-6a, k = 3 for legacy SRP-6)
-//   s    User's salt		  
+//   s    User's salt
 //   I    Cleartext Username
 //   p    Cleartext Password
 //   t	  auth pair 					(t = H(I | ':' | p))
@@ -395,17 +394,17 @@ func (c *Client) Generate(srv string) (string, error) {
 	if u.Cmp(zero) == 0 {
 		return "", fmt.Errorf("srp: invalid server public key")
 	}
-	t := c.s.hashbyte(c.i, []byte{':'}, c.p)            				// t = H(I | ":" | p)
-	x := c.s.hashint(salt, t)                           				// x = H(s | t)
-	c.S = computeSessionKey(pf.N, pf.g, c.k, x, u, c.a, B) 				// S = 
-	K1 := c.s.hashbyte(c.S.Bytes(), []byte{0, 0, 0, 0})					// creates first half of K (K1) 
-	K2 := c.s.hashbyte(c.S.Bytes(), []byte{0, 0, 0, 1})					// creates second half of K (K2)
-	c.xK = append(K1, K2...) 											// K = H(S | \x00\x00\x00\x00) | H(S | \x00\x00\x00\x01)
-	hN := c.s.hashbyte(pf.N.Bytes())									// hN = H(N)
-	hg := c.s.hashbyte(pf.g.Bytes())									// hg = H(g)
-	hNhg := xor(hN, hg)													// hNhg = hN ^ hg	
-	hu := c.s.hashbyte(c.i)												// hu = H(I)	
-	c.xM = c.s.hashbyte(hNhg, hu, salt, c.xA.Bytes(), B.Bytes(), c.xK) 	// M1 = H(hNhg | hu | A | B | K)
+	t := c.s.hashbyte(c.i, []byte{':'}, c.p)                           // t = H(I | ":" | p)
+	x := c.s.hashint(salt, t)                                          // x = H(s | t)
+	c.S = computeSessionKey(pf.N, pf.g, c.k, x, u, c.a, B)             // S =
+	K1 := c.s.hashbyte(c.S.Bytes(), []byte{0, 0, 0, 0})                // creates first half of K (K1)
+	K2 := c.s.hashbyte(c.S.Bytes(), []byte{0, 0, 0, 1})                // creates second half of K (K2)
+	c.xK = append(K1, K2...)                                           // K = H(S | \x00\x00\x00\x00) | H(S | \x00\x00\x00\x01)
+	hN := c.s.hashbyte(pf.N.Bytes())                                   // hN = H(N)
+	hg := c.s.hashbyte(pf.g.Bytes())                                   // hg = H(g)
+	hNhg := xor(hN, hg)                                                // hNhg = hN ^ hg
+	hu := c.s.hashbyte(c.i)                                            // hu = H(I)
+	c.xM = c.s.hashbyte(hNhg, hu, salt, c.xA.Bytes(), B.Bytes(), c.xK) // M1 = H(hNhg | hu | A | B | K)
 	//fmt.Println(len(c.xM))
 
 	return hex.EncodeToString(c.xM), nil
