@@ -47,8 +47,8 @@ We differ from the SRP-6a spec and RFC 5054 in a couple of key ways:
 The host calculates the password verifier using the following formula:
 
     s = randomsalt()          (same length as N)
-    I = H(I)
-    p = H(p)                  (hash/expand I & p)
+    I = I
+    p = p                  (hash/expand I & p)
     t = H(I, ":", p)
     x = H(s, t)
     v = g^x                   (computes password verifier)
