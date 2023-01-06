@@ -1,6 +1,6 @@
 // prime.go - Generate safe primes
 //
-// Copyright 2013-2017 Sudhi Herle <sudhi.herle-at-gmail-dot-com>
+// Copyright 2013-2023 Sudhi Herle <sudhi.herle-at-gmail-dot-com> && arag0re <arag0re-at-protonmail-dot-com>
 // License: MIT
 package srp
 
