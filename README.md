@@ -1,7 +1,7 @@
 # Standalone apple SRP-6a implementation in go-lang
 
-[![GoDoc](https://godoc.org/github.com/opencoff/go-srp?status.svg)](https://godoc.org/github.com/opencoff/go-srp)
-[![Go Report Card](https://goreportcard.com/badge/github.com/opencoff/go-srp)](https://goreportcard.com/report/github.com/opencoff/go-srp)
+[![GoDoc](https://godoc.org/github.com/arag0re/go-apple-srp6?status.svg)](https://godoc.org/github.com/arag0re/go-apple-srp6)
+[![Go Report Card](https://goreportcard.com/badge/github.com/arag0re/go-apple-srp6)](https://goreportcard.com/report/github.com/arag0re/go-apple-srp6)
 
 This is a standalone implementation of SRP in golang. It uses the go
 standard libraries and has no other external dependencies. This library
