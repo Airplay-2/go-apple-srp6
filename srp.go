@@ -1,6 +1,6 @@
 // srp.go - golang implementation of SRP-6a
 //
-// Copyright 2013-2017 Sudhi Herle <sudhi.herle-at-gmail-dot-com>
+// Copyright 2013-2023 Sudhi Herle <sudhi.herle-at-gmail-dot-com> && arag0re <arag0re.eth-at-protonmail-dot-com>
 // License: MIT
 //
 
@@ -14,31 +14,32 @@
 // "M" -- a hash of all the data it has and it received from the server. To
 // validate that the server also has the same value, it requires the server to send
 // its own proof. In the SRP paper [1], the authors use:
-//     M = H(H(N) xor H(g), H(I), s, A, B, K)
-//     M' = H(A, M, K)
+//
+//	M = H(H(N) xor H(g), H(I), s, A, B, K)
+//	M' = H(A, M, K)
 //
 // We use a simpler construction:
-//     M = H(K, A, B, I, s, N, g)
-//     M' = H(M, K)
 //
+//	M = H(K, A, B, I, s, N, g)
+//	M' = H(M, K)
 //
 // In this implementation:
 //
-//     H  = BLAKE2()
-//     k  = H(N, g)
-//     x  = H(s, I, P)
-//     I  = anonymized form of user identity (BLAKE2 of value sent by client)
-//     P  = hashed password (expands short passwords)
-//
+//	H  = BLAKE2()
+//	k  = H(N, g)
+//	x  = H(s, I, P)
+//	I  = anonymized form of user identity (BLAKE2 of value sent by client)
+//	P  = hashed password (expands short passwords)
 //
 // Per RFC-5054, we adopt the following padding convention:
 //
-//    k = H(N, pad(g))
-//    u = H(pad(A), pad(B))
+//	k = H(N, pad(g))
+//	u = H(pad(A), pad(B))
 //
 // References:
-//  [1] http://srp.stanford.edu/design.html
-//  [2] http://srp.stanford.edu/
+//
+//	[1] http://srp.stanford.edu/design.html
+//	[2] http://srp.stanford.edu/
 package srp
 
 // Implementation Notes
@@ -140,8 +141,9 @@ import (
 // notably the hash function and prime-field size.  The default hash function is
 // Blake2b-256. Any valid hash function as documented in "crypto" can be used.
 // There are two ways for creating an SRP environment:
-//   New()
-//   NewWithHash()
+//
+//	New()
+//	NewWithHash()
 type SRP struct {
 	h  crypto.Hash
 	pf *primeField
@@ -336,6 +338,7 @@ type Client struct {
 	a  *big.Int
 	xA *big.Int
 	k  *big.Int
+	S  *big.Int
 
 	xK []byte
 	xM []byte
@@ -343,13 +346,17 @@ type Client struct {
 
 // NewClient constructs an SRP client instance.
 func (s *SRP) NewClient(I, p []byte) (*Client, error) {
+	//a, err := hex.DecodeString("a18b940d3e1302e932a64defccf560a0714b3fa2683bbe3cea808b3abfa58b7d")
+	//if err != nil {
+	//	print(err)
+	//}
 	pf := s.pf
 	c := &Client{
 		s: s,
-		i: s.hashbyte(I),
-		p: s.hashbyte(p),
-		a: randBigInt(pf.n * 8),
-		k: s.hashint(pf.N.Bytes(), pad(pf.g, pf.n)),
+		i: I,
+		p: p,
+		a: randBigInt(pf.n * 8), /*new(big.Int).SetBytes(a)*/
+		k: s.hashint(pad(pf.N, pf.n), pad(pf.g, pf.n)),
 	}
 
 	c.xA = big.NewInt(0).Exp(pf.g, c.a, pf.N)
@@ -398,31 +405,45 @@ func (c *Client) Generate(srv string) (string, error) {
 	if u.Cmp(zero) == 0 {
 		return "", fmt.Errorf("srp: invalid server public key")
 	}
-
-	// S := ((B - kg^x) ^ (a + ux)) % N
-
-	x := c.s.hashint(c.i, c.p, salt)
-	t0 := big.NewInt(0).Exp(pf.g, x, pf.N)
-	t0 = t0.Mul(t0, c.k)
-
-	t1 := big.NewInt(0).Sub(B, t0)
-	t2 := big.NewInt(0).Add(c.a, big.NewInt(0).Mul(u, x))
-	S := big.NewInt(0).Exp(t1, t2, pf.N)
-
-	c.xK = c.s.hashbyte(S.Bytes())
-	c.xM = c.s.hashbyte(c.xK, c.xA.Bytes(), B.Bytes(), c.i, salt, pf.N.Bytes(), pf.g.Bytes())
-
-	//fmt.Printf("Client %d:\n\tx=%x\n\tS=%x\n\tK=%x\n\tM=%x\n", c.n *8, x, S, c.xK, c.xM)
+	auth := c.s.hashbyte(c.i, []byte{':'}, c.p)            // H(I | ":" | p)
+	x := c.s.hashint(salt, auth)                           // H(s | H(I | ":" | p))
+	c.S = computeSessionKey(pf.N, pf.g, c.k, x, u, c.a, B) //
+	K1 := c.s.hashbyte(c.S.Bytes(), []byte{0, 0, 0, 0})
+	K2 := c.s.hashbyte(c.S.Bytes(), []byte{0, 0, 0, 1})
+	c.xK = append(K1, K2...) // K = H(S | \x00\x00\x00\x00) | H(S | \x00\x00\x00\x01)
+	hN := c.s.hashbyte(pf.N.Bytes())
+	hg := c.s.hashbyte(pf.g.Bytes())
+	hNhg := xor(hN, hg)
+	hu := c.s.hashbyte(c.i)
+	c.xM = c.s.hashbyte(hNhg, hu, salt, c.xA.Bytes(), B.Bytes(), c.xK)
+	//fmt.Println(len(c.xM))
 
 	return hex.EncodeToString(c.xM), nil
+}
+
+func xor(b1, b2 []byte) []byte {
+	result := make([]byte, len(b1))
+	for i, _ := range b1 {
+		result[i] = b1[i] ^ b2[i]
+	}
+	return result
+}
+
+func computeSessionKey(N, g, k, x, u, a, B *big.Int) *big.Int {
+	exp := new(big.Int).Add(new(big.Int).Mul(u, x), a)
+	tmp := new(big.Int).Exp(g, x, N)
+	tmp.Mul(tmp, k)
+	tmp.Mod(tmp, N)
+	key := new(big.Int).Sub(B, tmp)
+	key.Exp(key, exp, N)
+	return key
 }
 
 // ServerOk takes a 'proof' offered by the server and verifies that it is valid.
 // i.e., we should compute the same hash() on M that the server did.
 func (c *Client) ServerOk(proof string) bool {
-	h := c.s.hashbyte(c.xK, c.xM)
+	h := c.s.hashbyte(c.xA.Bytes(), c.xM, c.xK)
 	myh := hex.EncodeToString(h)
-
 	return subtle.ConstantTimeCompare([]byte(myh), []byte(proof)) == 1
 }
 
